@@ -3,7 +3,6 @@ package user
 import (
 	"context"
 	"database/sql"
-	"time"
 
 	constant "github.com/HPNV/growlink-backend/constant"
 	modelDB "github.com/HPNV/growlink-backend/model/db"
@@ -53,7 +52,6 @@ func (u *User) Register(ctx context.Context, user *modelDB.User, plainPassword s
 		return nil, err
 	}
 	user.PasswordHash = string(hashedBytes)
-	user.CreatedAt = time.Now()
 
 	err = u.db.QueryRowContext(ctx, createUserQuery,
 		user.Email, user.PasswordHash, user.Role).Scan(&user.UUID, &user.Email, &user.Role, &user.CreatedAt, &user.PasswordHash)
