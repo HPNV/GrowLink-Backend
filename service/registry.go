@@ -1,21 +1,23 @@
 package service
 
-import "github.com/HPNV/growlink-backend/service/developer"
+import "github.com/HPNV/growlink-backend/service/user"
 
 type IRegistry interface {
-	GetDeveloper() developer.IDeveloper
+	GetUser() user.IUser
 }
 
 type Registry struct {
-	developer developer.IDeveloper
+	user user.IUser
 }
 
-func NewRegistry(developer developer.IDeveloper) *Registry {
+func NewRegistry(
+	user user.IUser,
+) *Registry {
 	return &Registry{
-		developer: developer,
+		user: user,
 	}
 }
 
-func (r *Registry) GetDeveloper() developer.IDeveloper {
-	return r.developer
+func (r *Registry) GetUser() user.IUser {
+	return r.user
 }

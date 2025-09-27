@@ -27,7 +27,7 @@ func (r *Route) SetupRoutes() {
 	v := r.engine.Group("/v1")
 
 	r.dummyRoute(v)
-	r.developerRoute(v)
+	r.userRoute(v)
 
 	r.engine.Run(":" + r.cfg.Port)
 }
@@ -36,7 +36,9 @@ func (r *Route) dummyRoute(g *gin.RouterGroup) {
 	g.GET("/dummy")
 }
 
-func (r *Route) developerRoute(g *gin.RouterGroup) {
-	group := g.Group("/developer")
-	group.POST("", r.delivery.GetDeveloper().CreateDeveloper)
+func (r *Route) userRoute(g *gin.RouterGroup) {
+	user := r.delivery.GetUser()
+	u := g.Group("/user")
+	u.POST("/login", user.Login)
+	u.POST("/register", user.Register)
 }

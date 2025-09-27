@@ -1,27 +1,27 @@
 package repository
 
 import (
-	"github.com/HPNV/growlink-backend/repository/developer"
+	"github.com/HPNV/growlink-backend/repository/user"
 	"github.com/jmoiron/sqlx"
 )
 
 type IRegistry interface {
 	GetDB() *sqlx.DB
-	GetDeveloper() developer.IDeveloper
+	GetUser() user.IUser
 }
 
 type Registry struct {
-	db            *sqlx.DB
-	developerRepo developer.IDeveloper
+	db   *sqlx.DB
+	user user.IUser
 }
 
 func NewRegistry(
 	db *sqlx.DB,
-	developerRepo developer.IDeveloper,
+	user user.IUser,
 ) *Registry {
 	return &Registry{
-		db:            db,
-		developerRepo: developerRepo,
+		db:   db,
+		user: user,
 	}
 }
 
@@ -29,6 +29,6 @@ func (r *Registry) GetDB() *sqlx.DB {
 	return r.db
 }
 
-func (r *Registry) GetDeveloper() developer.IDeveloper {
-	return r.developerRepo
+func (r *Registry) GetUser() user.IUser {
+	return r.user
 }

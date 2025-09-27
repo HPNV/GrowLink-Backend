@@ -1,21 +1,23 @@
 package delivery
 
-import "github.com/HPNV/growlink-backend/delivery/developer"
+import "github.com/HPNV/growlink-backend/delivery/user"
 
 type IDelivery interface {
-	GetDeveloper() developer.IDeveloper
+	GetUser() user.IUser
 }
 
 type Delivery struct {
-	developer developer.IDeveloper
+	user user.IUser
 }
 
-func NewDelivery(developerService developer.IDeveloper) IDelivery {
+func NewDelivery(
+	user user.IUser,
+) IDelivery {
 	return &Delivery{
-		developer: developerService,
+		user: user,
 	}
 }
 
-func (d *Delivery) GetDeveloper() developer.IDeveloper {
-	return d.developer
+func (d *Delivery) GetUser() user.IUser {
+	return d.user
 }

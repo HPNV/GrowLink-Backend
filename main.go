@@ -14,13 +14,11 @@ import (
 	_ "github.com/lib/pq"
 
 	//repository imports
-	developerRepo "github.com/HPNV/growlink-backend/repository/developer"
-
+	userRepo "github.com/HPNV/growlink-backend/repository/user"
 	//service imports
-	developerService "github.com/HPNV/growlink-backend/service/developer"
-
+	userService "github.com/HPNV/growlink-backend/service/user"
 	//delivery imports
-	developerDelivery "github.com/HPNV/growlink-backend/delivery/developer"
+	userDelivery "github.com/HPNV/growlink-backend/delivery/user"
 )
 
 func main() {
@@ -71,23 +69,30 @@ func connect(
 }
 
 func initRepository(db *sqlx.DB) *repository.Registry {
-	developer := developerRepo.NewDeveloperRepo(db)
-	repo := repository.NewRegistry(db, developer)
+	user := userRepo.NewUser(db)
+	repo := repository.NewRegistry(
+		db,
+		user,
+	)
 
 	return repo
 }
 
 func initService(repo repository.IRegistry) *service.Registry {
-	developer := developerService.NewDeveloperService(repo)
-
-	serviceRegistry := service.NewRegistry(developer)
+	user := userService.NewUser(repo)
+	serviceRegistry := service.NewRegistry(
+		user,
+	)
 
 	return serviceRegistry
 }
 
 func initDelivery(service service.IRegistry) delivery.IDelivery {
-	developer := developerDelivery.NewDeveloperService(service)
-	delivery := delivery.NewDelivery(developer)
+	user := userDelivery.NewUser(service)
+
+	delivery := delivery.NewDelivery(
+		user,
+	)
 
 	return delivery
 }
