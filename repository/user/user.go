@@ -56,7 +56,7 @@ func (u *User) Register(ctx context.Context, user *modelDB.User, plainPassword s
 	user.CreatedAt = time.Now()
 
 	err = u.db.QueryRowContext(ctx, createUserQuery,
-		user.Email, user.PasswordHash, user.Role).Scan(&user.UUID)
+		user.Email, user.PasswordHash, user.Role).Scan(&user.UUID, &user.Email, &user.Role, &user.CreatedAt, &user.PasswordHash)
 	if err != nil {
 		return nil, err
 	}
