@@ -14,10 +14,24 @@ import (
 	_ "github.com/lib/pq"
 
 	//repository imports
+	businessRepo "github.com/HPNV/growlink-backend/repository/business"
+	projectRepo "github.com/HPNV/growlink-backend/repository/project"
+	skillRepo "github.com/HPNV/growlink-backend/repository/skill"
+	studentRepo "github.com/HPNV/growlink-backend/repository/student"
 	userRepo "github.com/HPNV/growlink-backend/repository/user"
+
 	//service imports
+	businessService "github.com/HPNV/growlink-backend/service/business"
+	projectService "github.com/HPNV/growlink-backend/service/project"
+	skillService "github.com/HPNV/growlink-backend/service/skill"
+	studentService "github.com/HPNV/growlink-backend/service/student"
 	userService "github.com/HPNV/growlink-backend/service/user"
+
 	//delivery imports
+	businessDelivery "github.com/HPNV/growlink-backend/delivery/business"
+	projectDelivery "github.com/HPNV/growlink-backend/delivery/project"
+	skillDelivery "github.com/HPNV/growlink-backend/delivery/skill"
+	studentDelivery "github.com/HPNV/growlink-backend/delivery/student"
 	userDelivery "github.com/HPNV/growlink-backend/delivery/user"
 )
 
@@ -70,9 +84,18 @@ func connect(
 
 func initRepository(db *sqlx.DB) *repository.Registry {
 	user := userRepo.NewUser(db)
+	skill := skillRepo.NewSkill(db)
+	business := businessRepo.NewBusiness(db)
+	student := studentRepo.NewStudent(db)
+	project := projectRepo.NewProject(db)
+
 	repo := repository.NewRegistry(
 		db,
 		user,
+		skill,
+		business,
+		student,
+		project,
 	)
 
 	return repo
@@ -80,8 +103,17 @@ func initRepository(db *sqlx.DB) *repository.Registry {
 
 func initService(repo repository.IRegistry) *service.Registry {
 	user := userService.NewUser(repo)
+	skill := skillService.NewSkill(repo)
+	business := businessService.NewBusiness(repo)
+	student := studentService.NewStudent(repo)
+	project := projectService.NewProject(repo)
+
 	serviceRegistry := service.NewRegistry(
 		user,
+		skill,
+		business,
+		student,
+		project,
 	)
 
 	return serviceRegistry
@@ -89,9 +121,17 @@ func initService(repo repository.IRegistry) *service.Registry {
 
 func initDelivery(service service.IRegistry) delivery.IDelivery {
 	user := userDelivery.NewUser(service)
+	business := businessDelivery.NewBusiness(service)
+	student := studentDelivery.NewStudent(service)
+	skill := skillDelivery.NewSkill(service)
+	project := projectDelivery.NewProject(service)
 
 	delivery := delivery.NewDelivery(
 		user,
+		business,
+		student,
+		skill,
+		project,
 	)
 
 	return delivery

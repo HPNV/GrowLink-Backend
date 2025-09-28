@@ -12,7 +12,7 @@ import (
 
 type IUser interface {
 	Login(ctx context.Context, email, password string) (*modelDB.User, error)
-	Register(ctx context.Context, user *modelDB.User, plainPassword string) (*modelDB.User, error)
+	Register(ctx context.Context, tx *sqlx.Tx, user *modelDB.User, plainPassword string) (*modelDB.User, error)
 }
 
 type User struct {
@@ -46,14 +46,14 @@ func (u *User) Login(ctx context.Context, email, plainPassword string) (*modelDB
 	return &user, nil
 }
 
-func (u *User) Register(ctx context.Context, user *modelDB.User, plainPassword string) (*modelDB.User, error) {
+func (u *User) Register(ctx context.Context, tx *sqlx.Tx, user *modelDB.User, plainPassword string) (*modelDB.User, error) {
 	hashedBytes, err := bcrypt.GenerateFromPassword([]byte(plainPassword), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, err
 	}
 	user.PasswordHash = string(hashedBytes)
 
-	err = u.db.QueryRowContext(ctx, createUserQuery,
+	err = tx.QueryRowContext(ctx, createUserQuery,
 		user.Email, user.PasswordHash, user.Role).Scan(&user.UUID, &user.Email, &user.PasswordHash, &user.Role, &user.CreatedAt)
 	if err != nil {
 		return nil, err

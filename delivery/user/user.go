@@ -43,7 +43,7 @@ func (u *User) Register(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	user, err := u.service.GetUser().Register(c, req.Email, req.Password, req.Role)
+	user, err := u.service.GetUser().Register(c, req)
 	if err != nil {
 		c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
 		return
