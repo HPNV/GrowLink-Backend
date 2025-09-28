@@ -2,6 +2,7 @@ package repository
 
 import (
 	"github.com/HPNV/growlink-backend/repository/business"
+	"github.com/HPNV/growlink-backend/repository/file"
 	"github.com/HPNV/growlink-backend/repository/project"
 	"github.com/HPNV/growlink-backend/repository/skill"
 	"github.com/HPNV/growlink-backend/repository/student"
@@ -16,6 +17,7 @@ type IRegistry interface {
 	GetBusiness() business.IBusiness
 	GetStudent() student.IStudent
 	GetProject() project.IProject
+	GetFile() file.IFile
 	WithTransaction(txFunc func(tx *sqlx.Tx) error) error
 }
 
@@ -26,6 +28,7 @@ type Registry struct {
 	business business.IBusiness
 	student  student.IStudent
 	project  project.IProject
+	file     file.IFile
 }
 
 func NewRegistry(
@@ -35,6 +38,7 @@ func NewRegistry(
 	business business.IBusiness,
 	student student.IStudent,
 	project project.IProject,
+	file file.IFile,
 ) *Registry {
 	return &Registry{
 		db:       db,
@@ -43,6 +47,7 @@ func NewRegistry(
 		business: business,
 		student:  student,
 		project:  project,
+		file:     file,
 	}
 }
 
@@ -68,6 +73,10 @@ func (r *Registry) GetStudent() student.IStudent {
 
 func (r *Registry) GetProject() project.IProject {
 	return r.project
+}
+
+func (r *Registry) GetFile() file.IFile {
+	return r.file
 }
 
 func (r *Registry) WithTransaction(txFunc func(tx *sqlx.Tx) error) error {

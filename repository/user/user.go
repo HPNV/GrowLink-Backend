@@ -13,6 +13,7 @@ import (
 type IUser interface {
 	Login(ctx context.Context, email, password string) (*modelDB.User, error)
 	Register(ctx context.Context, tx *sqlx.Tx, user *modelDB.User, plainPassword string) (*modelDB.User, error)
+	GetAll() ([]*modelDB.User, error)
 }
 
 type User struct {
@@ -62,4 +63,31 @@ func (u *User) Register(ctx context.Context, tx *sqlx.Tx, user *modelDB.User, pl
 	user.PasswordHash = ""
 
 	return user, nil
+}
+
+func (u *User) GetAll() ([]*modelDB.User, error) {
+	var users []*modelDB.User
+
+	rows, err := u.db.Query(getAllUsersQuery)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var user modelDB.User
+		err := rows.Scan(&user.UUID, &user.Email, &user.PasswordHash, &user.Role, &user.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+		// Don't return password hash for security
+		user.PasswordHash = ""
+		users = append(users, &user)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return users, nil
 }

@@ -2,6 +2,7 @@ package delivery
 
 import (
 	"github.com/HPNV/growlink-backend/delivery/business"
+	"github.com/HPNV/growlink-backend/delivery/file"
 	"github.com/HPNV/growlink-backend/delivery/project"
 	"github.com/HPNV/growlink-backend/delivery/skill"
 	"github.com/HPNV/growlink-backend/delivery/student"
@@ -14,6 +15,7 @@ type IDelivery interface {
 	GetStudent() student.IStudent
 	GetSkill() skill.ISkill
 	GetProject() project.IProject
+	GetFile() file.IFile
 }
 
 type Delivery struct {
@@ -22,6 +24,7 @@ type Delivery struct {
 	student  student.IStudent
 	skill    skill.ISkill
 	project  project.IProject
+	file     file.IFile
 }
 
 func NewDelivery(
@@ -30,6 +33,7 @@ func NewDelivery(
 	student student.IStudent,
 	skill skill.ISkill,
 	project project.IProject,
+	file file.IFile,
 ) IDelivery {
 	return &Delivery{
 		user:     user,
@@ -37,6 +41,7 @@ func NewDelivery(
 		student:  student,
 		skill:    skill,
 		project:  project,
+		file:     file,
 	}
 }
 
@@ -58,4 +63,8 @@ func (d *Delivery) GetSkill() skill.ISkill {
 
 func (d *Delivery) GetProject() project.IProject {
 	return d.project
+}
+
+func (d *Delivery) GetFile() file.IFile {
+	return d.file
 }

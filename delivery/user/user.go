@@ -11,6 +11,7 @@ import (
 type IUser interface {
 	Login(*gin.Context)
 	Register(*gin.Context)
+	GetAll(*gin.Context)
 }
 
 type User struct {
@@ -49,4 +50,13 @@ func (u *User) Register(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusCreated, user)
+}
+
+func (u *User) GetAll(c *gin.Context) {
+	users, err := u.service.GetUser().GetAll()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, users)
 }

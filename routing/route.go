@@ -24,6 +24,10 @@ func NewRoute(cfg config.ServerConfig, delivery delivery.IDelivery) *Route {
 
 func (r *Route) SetupRoutes() {
 	r.engine = gin.Default()
+
+	// Serve static files
+	r.engine.Static("/static", "./static")
+
 	v := r.engine.Group("/v1")
 
 	r.userRoute(v)
@@ -31,6 +35,7 @@ func (r *Route) SetupRoutes() {
 	r.studentRoute(v)
 	r.skillRoute(v)
 	r.projectRoute(v)
+	r.fileRoute(v)
 
 	r.engine.Run(":" + r.cfg.Port)
 }
@@ -40,6 +45,7 @@ func (r *Route) userRoute(g *gin.RouterGroup) {
 	u := g.Group("/user")
 	u.POST("/login", user.Login)
 	u.POST("/register", user.Register)
+	u.GET("", user.GetAll)
 }
 
 func (r *Route) businessRoute(g *gin.RouterGroup) {
@@ -102,4 +108,14 @@ func (r *Route) projectRoute(g *gin.RouterGroup) {
 	p.POST("/:uuid/students/:studentUuid", project.AddStudent)
 	p.DELETE("/:uuid/students/:studentUuid", project.RemoveStudent)
 	p.GET("/:uuid/students", project.GetStudents)
+}
+
+func (r *Route) fileRoute(g *gin.RouterGroup) {
+	file := r.delivery.GetFile()
+	f := g.Group("/file")
+
+	f.POST("/upload", file.UploadImage)
+	f.GET("/:uuid", file.GetByUUID)
+	f.DELETE("/:uuid", file.Delete)
+	f.GET("/user/:uploadedBy", file.GetByUploadedBy)
 }

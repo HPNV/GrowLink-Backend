@@ -13,6 +13,7 @@ import (
 type IUser interface {
 	Login(ctx context.Context, email, password string) (*modelDB.User, error)
 	Register(ctx context.Context, request modelDTO.RegisterRequest) (*modelDB.User, error)
+	GetAll() ([]*modelDTO.UserResponse, error)
 }
 
 type User struct {
@@ -85,4 +86,23 @@ func (u *User) Register(ctx context.Context, request modelDTO.RegisterRequest) (
 		return nil, err
 	}
 	return user, nil
+}
+
+func (u *User) GetAll() ([]*modelDTO.UserResponse, error) {
+	users, err := u.repo.GetUser().GetAll()
+	if err != nil {
+		return nil, err
+	}
+
+	var responses []*modelDTO.UserResponse
+	for _, user := range users {
+		responses = append(responses, &modelDTO.UserResponse{
+			UUID:      user.UUID,
+			Email:     user.Email,
+			Role:      user.Role,
+			CreatedAt: user.CreatedAt,
+		})
+	}
+
+	return responses, nil
 }

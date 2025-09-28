@@ -2,6 +2,7 @@ package service
 
 import (
 	"github.com/HPNV/growlink-backend/service/business"
+	"github.com/HPNV/growlink-backend/service/file"
 	"github.com/HPNV/growlink-backend/service/project"
 	"github.com/HPNV/growlink-backend/service/skill"
 	"github.com/HPNV/growlink-backend/service/student"
@@ -14,6 +15,7 @@ type IRegistry interface {
 	GetBusiness() business.IBusiness
 	GetStudent() student.IStudent
 	GetProject() project.IProject
+	GetFile() file.IFile
 }
 
 type Registry struct {
@@ -22,6 +24,7 @@ type Registry struct {
 	business business.IBusiness
 	student  student.IStudent
 	project  project.IProject
+	file     file.IFile
 }
 
 func NewRegistry(
@@ -30,6 +33,7 @@ func NewRegistry(
 	business business.IBusiness,
 	student student.IStudent,
 	project project.IProject,
+	file file.IFile,
 ) *Registry {
 	return &Registry{
 		user:     user,
@@ -37,6 +41,7 @@ func NewRegistry(
 		business: business,
 		student:  student,
 		project:  project,
+		file:     file,
 	}
 }
 
@@ -58,4 +63,8 @@ func (r *Registry) GetStudent() student.IStudent {
 
 func (r *Registry) GetProject() project.IProject {
 	return r.project
+}
+
+func (r *Registry) GetFile() file.IFile {
+	return r.file
 }

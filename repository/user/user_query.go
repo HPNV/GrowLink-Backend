@@ -16,4 +16,14 @@ const (
 		VALUES ($1, $2, $3) 
 		RETURNING uuid, email, password_hash, role, created_at
 	`
+	getAllUsersQuery = `
+		SELECT 
+			uuid, 
+			email, 
+			password_hash, 
+			role, 
+			created_at
+		FROM users 
+		ORDER BY created_at DESC
+	`
 )

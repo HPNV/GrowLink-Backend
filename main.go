@@ -15,6 +15,7 @@ import (
 
 	//repository imports
 	businessRepo "github.com/HPNV/growlink-backend/repository/business"
+	fileRepo "github.com/HPNV/growlink-backend/repository/file"
 	projectRepo "github.com/HPNV/growlink-backend/repository/project"
 	skillRepo "github.com/HPNV/growlink-backend/repository/skill"
 	studentRepo "github.com/HPNV/growlink-backend/repository/student"
@@ -22,6 +23,7 @@ import (
 
 	//service imports
 	businessService "github.com/HPNV/growlink-backend/service/business"
+	fileService "github.com/HPNV/growlink-backend/service/file"
 	projectService "github.com/HPNV/growlink-backend/service/project"
 	skillService "github.com/HPNV/growlink-backend/service/skill"
 	studentService "github.com/HPNV/growlink-backend/service/student"
@@ -29,6 +31,7 @@ import (
 
 	//delivery imports
 	businessDelivery "github.com/HPNV/growlink-backend/delivery/business"
+	fileDelivery "github.com/HPNV/growlink-backend/delivery/file"
 	projectDelivery "github.com/HPNV/growlink-backend/delivery/project"
 	skillDelivery "github.com/HPNV/growlink-backend/delivery/skill"
 	studentDelivery "github.com/HPNV/growlink-backend/delivery/student"
@@ -88,6 +91,7 @@ func initRepository(db *sqlx.DB) *repository.Registry {
 	business := businessRepo.NewBusiness(db)
 	student := studentRepo.NewStudent(db)
 	project := projectRepo.NewProject(db)
+	file := fileRepo.NewFile(db)
 
 	repo := repository.NewRegistry(
 		db,
@@ -96,6 +100,7 @@ func initRepository(db *sqlx.DB) *repository.Registry {
 		business,
 		student,
 		project,
+		file,
 	)
 
 	return repo
@@ -107,6 +112,7 @@ func initService(repo repository.IRegistry) *service.Registry {
 	business := businessService.NewBusiness(repo)
 	student := studentService.NewStudent(repo)
 	project := projectService.NewProject(repo)
+	file := fileService.NewFile(repo)
 
 	serviceRegistry := service.NewRegistry(
 		user,
@@ -114,6 +120,7 @@ func initService(repo repository.IRegistry) *service.Registry {
 		business,
 		student,
 		project,
+		file,
 	)
 
 	return serviceRegistry
@@ -125,6 +132,7 @@ func initDelivery(service service.IRegistry) delivery.IDelivery {
 	student := studentDelivery.NewStudent(service)
 	skill := skillDelivery.NewSkill(service)
 	project := projectDelivery.NewProject(service)
+	file := fileDelivery.NewFile(service)
 
 	delivery := delivery.NewDelivery(
 		user,
@@ -132,6 +140,7 @@ func initDelivery(service service.IRegistry) delivery.IDelivery {
 		student,
 		skill,
 		project,
+		file,
 	)
 
 	return delivery
