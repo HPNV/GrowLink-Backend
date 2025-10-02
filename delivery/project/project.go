@@ -14,6 +14,7 @@ type IProject interface {
 	Update(c *gin.Context)
 	Delete(c *gin.Context)
 	GetAll(c *gin.Context)
+	GetAllList(c *gin.Context)
 	GetByBusinessUUID(c *gin.Context)
 	AddSkill(c *gin.Context)
 	RemoveSkill(c *gin.Context)
@@ -109,6 +110,63 @@ func (p *Project) GetAll(c *gin.Context) {
 	c.JSON(http.StatusOK, projects)
 }
 
+func (p *Project) GetAllList(c *gin.Context) {
+	var req dto.ProjectListRequest
+
+	// Parse query parameters
+	if skill := c.Query("skill"); skill != "" {
+		req.Skill = &skill
+	}
+
+	if search := c.Query("search"); search != "" {
+		req.Search = &search
+	}
+
+	// Parse budget (optional)
+	if budget := c.Query("budget"); budget != "" {
+		if budgetVal, err := parseIntFromString(budget); err == nil {
+			req.Budget = &budgetVal
+		}
+	}
+
+	// Parse page and limit with defaults
+	page := 1
+	if pageStr := c.DefaultQuery("page", "1"); pageStr != "" {
+		if pageInt, err := parseIntFromString(pageStr); err == nil {
+			page = pageInt
+		}
+	}
+	req.Page = page
+
+	limit := 10
+	if limitStr := c.DefaultQuery("limit", "10"); limitStr != "" {
+		if limitInt, err := parseIntFromString(limitStr); err == nil {
+			limit = limitInt
+		}
+	}
+	req.Limit = limit
+
+	response, err := p.service.GetProject().GetAllList(&req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+// Helper function to parse string to int
+func parseIntFromString(s string) (int, error) {
+	result := 0
+	for _, r := range s {
+		if r < '0' || r > '9' {
+			return 0, gin.Error{Err: nil}
+		}
+		result = result*10 + int(r-'0')
+	}
+	return result, nil
+}
+
 func (p *Project) GetByBusinessUUID(c *gin.Context) {
 	businessUUID := c.Param("businessUuid")
 
@@ -123,9 +181,14 @@ func (p *Project) GetByBusinessUUID(c *gin.Context) {
 
 func (p *Project) AddSkill(c *gin.Context) {
 	projectUUID := c.Param("uuid")
-	skillUUID := c.Param("skillUuid")
 
-	err := p.service.GetProject().AddSkill(projectUUID, skillUUID)
+	var req dto.SkillNameRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	err := p.service.GetProject().AddSkill(projectUUID, req.SkillName)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -136,9 +199,14 @@ func (p *Project) AddSkill(c *gin.Context) {
 
 func (p *Project) RemoveSkill(c *gin.Context) {
 	projectUUID := c.Param("uuid")
-	skillUUID := c.Param("skillUuid")
 
-	err := p.service.GetProject().RemoveSkill(projectUUID, skillUUID)
+	var req dto.SkillNameRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	err := p.service.GetProject().RemoveSkill(projectUUID, req.SkillName)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

@@ -1,6 +1,7 @@
 CREATE TABLE IF NOT EXISTS users (
     uuid UUID DEFAULT gen_random_uuid() UNIQUE PRIMARY KEY,
     email VARCHAR(100) UNIQUE NOT NULL,
+    name VARCHAR(100) NOT NULL,
     password_hash TEXT NOT NULL,
     role VARCHAR(20) CHECK (role IN ('student', 'business')) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

@@ -11,3 +11,7 @@ type SkillResponse struct {
 	Description string `json:"description"`
 	CreatedAt   string `json:"created_at"`
 }
+
+type SkillNameRequest struct {
+	SkillName string `json:"skill_name" binding:"required"`
+}

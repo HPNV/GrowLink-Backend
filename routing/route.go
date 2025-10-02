@@ -25,6 +25,20 @@ func NewRoute(cfg config.ServerConfig, delivery delivery.IDelivery) *Route {
 func (r *Route) SetupRoutes() {
 	r.engine = gin.Default()
 
+	// Add CORS middleware
+	r.engine.Use(func(c *gin.Context) {
+		c.Header("Access-Control-Allow-Origin", "*")
+		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		c.Header("Access-Control-Allow-Headers", "Origin, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
+			return
+		}
+
+		c.Next()
+	})
+
 	// Serve static files
 	r.engine.Static("/static", "./static")
 
@@ -46,6 +60,8 @@ func (r *Route) userRoute(g *gin.RouterGroup) {
 	u.POST("/login", user.Login)
 	u.POST("/register", user.Register)
 	u.GET("", user.GetAll)
+	u.GET("/students", user.GetStudentList)
+	u.GET("/:uuid", user.GetDetail)
 }
 
 func (r *Route) businessRoute(g *gin.RouterGroup) {
@@ -72,8 +88,8 @@ func (r *Route) studentRoute(g *gin.RouterGroup) {
 	s.DELETE("/:uuid", student.Delete)
 
 	// Student skills management
-	s.POST("/:uuid/skills/:skillUuid", student.AddSkill)
-	s.DELETE("/:uuid/skills/:skillUuid", student.RemoveSkill)
+	s.POST("/:uuid/skills", student.AddSkill)
+	s.DELETE("/:uuid/skills", student.RemoveSkill)
 	s.GET("/:uuid/skills", student.GetSkills)
 }
 
@@ -94,14 +110,15 @@ func (r *Route) projectRoute(g *gin.RouterGroup) {
 
 	p.POST("/business/:businessUuid", project.Create)
 	p.GET("", project.GetAll)
+	p.GET("/list", project.GetAllList)
 	p.GET("/:uuid", project.GetByUUID)
 	p.GET("/business/:businessUuid", project.GetByBusinessUUID)
 	p.PUT("/:uuid", project.Update)
 	p.DELETE("/:uuid", project.Delete)
 
 	// Project skills management
-	p.POST("/:uuid/skills/:skillUuid", project.AddSkill)
-	p.DELETE("/:uuid/skills/:skillUuid", project.RemoveSkill)
+	p.POST("/:uuid/skills", project.AddSkill)
+	p.DELETE("/:uuid/skills", project.RemoveSkill)
 	p.GET("/:uuid/skills", project.GetSkills)
 
 	// Project students management

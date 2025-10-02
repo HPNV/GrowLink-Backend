@@ -1,7 +1,11 @@
 package project
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/HPNV/growlink-backend/model/db"
+	"github.com/HPNV/growlink-backend/model/dto"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -11,6 +15,7 @@ type IProject interface {
 	Update(tx *sqlx.Tx, project *db.Project) error
 	Delete(tx *sqlx.Tx, uuid string) error
 	GetAll() ([]*db.Project, error)
+	GetAllList(queryParam *dto.ProjectListRequest) ([]*db.Project, int, error)
 	GetByBusinessUUID(businessUUID string) ([]*db.Project, error)
 	AddSkill(tx *sqlx.Tx, projectUUID, skillUUID string) error
 	RemoveSkill(tx *sqlx.Tx, projectUUID, skillUUID string) error
@@ -31,13 +36,7 @@ func NewProject(db *sqlx.DB) IProject {
 }
 
 func (p *Project) Create(tx *sqlx.Tx, project *db.Project) error {
-	query := `
-		INSERT INTO projects (name, description, duration, timeline, deliverables, created_by)
-		VALUES ($1, $2, $3, $4, $5, $6)
-		RETURNING uuid, created_at
-	`
-
-	err := tx.QueryRow(query, project.Name, project.Description, project.Duration, project.Timeline, project.Deliverables, project.CreatedBy).Scan(&project.UUID, &project.CreatedAt)
+	err := tx.QueryRow(CreateQuery, project.Name, project.Description, project.Duration, project.Timeline, project.Deliverables, project.CreatedBy).Scan(&project.UUID, &project.CreatedAt)
 	if err != nil {
 		return err
 	}
@@ -47,95 +46,134 @@ func (p *Project) Create(tx *sqlx.Tx, project *db.Project) error {
 
 func (p *Project) GetByUUID(uuid string) (*db.Project, error) {
 	project := &db.Project{}
-	query := `SELECT uuid, name, description, status, created_by, created_at FROM projects WHERE uuid = $1`
-	err := p.db.Get(project, query, uuid)
+	err := p.db.Get(project, GetByUUIDQuery, uuid)
 	return project, err
 }
 
 func (p *Project) Update(tx *sqlx.Tx, project *db.Project) error {
-	query := `
-		UPDATE projects 
-		SET name = $1, description = $2, status = $3
-		WHERE uuid = $4
-	`
-	_, err := tx.Exec(query, project.Name, project.Description, project.Status, project.UUID)
+	_, err := tx.Exec(UpdateQuery, project.Name, project.Description, project.Status, project.UUID)
 	return err
 }
 
 func (p *Project) Delete(tx *sqlx.Tx, uuid string) error {
-	query := `DELETE FROM projects WHERE uuid = $1`
-	_, err := tx.Exec(query, uuid)
+	_, err := tx.Exec(DeleteQuery, uuid)
 	return err
 }
 
 func (p *Project) GetAll() ([]*db.Project, error) {
 	var projects []*db.Project
-	query := `SELECT uuid, name, description, status, created_by, created_at FROM projects ORDER BY created_at DESC`
-	err := p.db.Select(&projects, query)
+	err := p.db.Select(&projects, GetAllQuery)
 	return projects, err
 }
 
 func (p *Project) GetByBusinessUUID(businessUUID string) ([]*db.Project, error) {
 	var projects []*db.Project
-	query := `SELECT uuid, name, description, status, created_by, created_at FROM projects WHERE created_by = $1 ORDER BY created_at DESC`
-	err := p.db.Select(&projects, query, businessUUID)
+	err := p.db.Select(&projects, GetByBusinessUUIDQuery, businessUUID)
 	return projects, err
 }
 
 func (p *Project) AddSkill(tx *sqlx.Tx, projectUUID, skillUUID string) error {
-	query := `
-		INSERT INTO project_skills (project_uuid, skill_uuid)
-		VALUES ($1, $2)
-		ON CONFLICT (project_uuid, skill_uuid) DO NOTHING
-	`
-	_, err := tx.Exec(query, projectUUID, skillUUID)
+	_, err := tx.Exec(AddSkillQuery, projectUUID, skillUUID)
 	return err
 }
 
 func (p *Project) RemoveSkill(tx *sqlx.Tx, projectUUID, skillUUID string) error {
-	query := `DELETE FROM project_skills WHERE project_uuid = $1 AND skill_uuid = $2`
-	_, err := tx.Exec(query, projectUUID, skillUUID)
+	_, err := tx.Exec(RemoveSkillQuery, projectUUID, skillUUID)
 	return err
 }
 
 func (p *Project) GetSkills(projectUUID string) ([]*db.Skill, error) {
 	var skills []*db.Skill
-	query := `
-		SELECT s.uuid, s.name, s.description, s.created_at
-		FROM skills s
-		INNER JOIN project_skills ps ON s.uuid = ps.skill_uuid
-		WHERE ps.project_uuid = $1
-		ORDER BY s.name
-	`
-	err := p.db.Select(&skills, query, projectUUID)
+	err := p.db.Select(&skills, GetSkillsQuery, projectUUID)
 	return skills, err
 }
 
 func (p *Project) AddStudent(tx *sqlx.Tx, projectUUID, studentUUID string) error {
-	query := `
-		INSERT INTO student_projects (student_uuid, project_uuid)
-		VALUES ($1, $2)
-		ON CONFLICT (student_uuid, project_uuid) DO NOTHING
-	`
-	_, err := tx.Exec(query, studentUUID, projectUUID)
+	_, err := tx.Exec(AddStudentQuery, studentUUID, projectUUID)
 	return err
 }
 
 func (p *Project) RemoveStudent(tx *sqlx.Tx, projectUUID, studentUUID string) error {
-	query := `DELETE FROM student_projects WHERE project_uuid = $1 AND student_uuid = $2`
-	_, err := tx.Exec(query, projectUUID, studentUUID)
+	_, err := tx.Exec(RemoveStudentQuery, projectUUID, studentUUID)
 	return err
 }
 
 func (p *Project) GetStudents(projectUUID string) ([]*db.Student, error) {
 	var students []*db.Student
-	query := `
-		SELECT s.uuid, s.user_uuid, s.university
-		FROM students s
-		INNER JOIN student_projects sp ON s.uuid = sp.student_uuid
-		WHERE sp.project_uuid = $1
-		ORDER BY s.university
-	`
-	err := p.db.Select(&students, query, projectUUID)
+	err := p.db.Select(&students, GetStudentsQuery, projectUUID)
 	return students, err
+}
+
+func (p *Project) GetAllList(queryParam *dto.ProjectListRequest) ([]*db.Project, int, error) {
+	var projects []*db.Project
+	var args []interface{}
+	var whereConditions []string
+	argIndex := 1
+
+	// Build WHERE conditions
+	if queryParam.Skill != nil && *queryParam.Skill != "" {
+		whereConditions = append(whereConditions, fmt.Sprintf(`EXISTS (
+			SELECT 1 FROM project_skills ps 
+			JOIN skills s ON ps.skill_uuid = s.uuid 
+			WHERE ps.project_uuid = p.uuid AND s.name ILIKE $%d
+		)`, argIndex))
+		args = append(args, "%"+*queryParam.Skill+"%")
+		argIndex++
+	}
+
+	if queryParam.Budget != nil && *queryParam.Budget > 0 {
+		whereConditions = append(whereConditions, fmt.Sprintf("p.duration <= $%d", argIndex))
+		args = append(args, *queryParam.Budget)
+		argIndex++
+	}
+
+	if queryParam.Search != nil && *queryParam.Search != "" {
+		whereConditions = append(whereConditions, fmt.Sprintf(`(
+			p.name ILIKE $%d OR 
+			p.description ILIKE $%d OR 
+			p.deliverables ILIKE $%d
+		)`, argIndex, argIndex, argIndex))
+		args = append(args, "%"+*queryParam.Search+"%")
+		argIndex++
+	}
+
+	// Build the complete query
+	query := GetAllListQuery
+	countQuery := GetAllListCountQuery
+
+	if len(whereConditions) > 0 {
+		whereClause := " WHERE " + strings.Join(whereConditions, " AND ")
+		query += whereClause
+		countQuery += whereClause
+	}
+
+	// Get total count
+	var totalCount int
+	err := p.db.Get(&totalCount, countQuery, args...)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Add ORDER BY and pagination
+	query += " ORDER BY p.created_at DESC"
+
+	if queryParam.Limit > 0 {
+		query += fmt.Sprintf(" LIMIT $%d", argIndex)
+		args = append(args, queryParam.Limit)
+		argIndex++
+	}
+
+	if queryParam.Page > 0 {
+		offset := (queryParam.Page - 1) * queryParam.Limit
+		query += fmt.Sprintf(" OFFSET $%d", argIndex)
+		args = append(args, offset)
+	}
+
+	// Execute the query
+	err = p.db.Select(&projects, query, args...)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return projects, totalCount, nil
 }

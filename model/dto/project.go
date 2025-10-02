@@ -27,3 +27,19 @@ type ProjectUpdateRequest struct {
 	Description string `json:"description"`
 	Status      string `json:"status" binding:"omitempty,oneof=open in_progress completed"`
 }
+
+type ProjectListRequest struct {
+	Skill  *string `json:"skill"`
+	Budget *int    `json:"budget"`
+	Search *string `json:"search"`
+	Page   int     `json:"page" binding:"required"`
+	Limit  int     `json:"limit" binding:"required"`
+}
+
+type ProjectListResponse struct {
+	Projects   []*ProjectResponse `json:"projects"`
+	TotalCount int                `json:"total_count"`
+	Page       int                `json:"page"`
+	Limit      int                `json:"limit"`
+	TotalPages int                `json:"total_pages"`
+}

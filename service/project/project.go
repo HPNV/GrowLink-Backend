@@ -13,9 +13,10 @@ type IProject interface {
 	Update(uuid string, req *dto.ProjectUpdateRequest) (*dto.ProjectResponse, error)
 	Delete(uuid string) error
 	GetAll() ([]*dto.ProjectResponse, error)
+	GetAllList(req *dto.ProjectListRequest) (*dto.ProjectListResponse, error)
 	GetByBusinessUUID(businessUUID string) ([]*dto.ProjectResponse, error)
-	AddSkill(projectUUID, skillUUID string) error
-	RemoveSkill(projectUUID, skillUUID string) error
+	AddSkill(projectUUID, skillName string) error
+	RemoveSkill(projectUUID, skillName string) error
 	GetSkills(projectUUID string) ([]*dto.SkillResponse, error)
 	AddStudent(projectUUID, studentUUID string) error
 	RemoveStudent(projectUUID, studentUUID string) error
@@ -48,8 +49,13 @@ func (p *Project) Create(businessUUID string, req *dto.ProjectRequest) (*dto.Pro
 			return err
 		}
 
-		for _, skillUUID := range req.Skills {
-			if err := p.repo.GetProject().AddSkill(tx, project.UUID, skillUUID); err != nil {
+		for _, skillName := range req.Skills {
+			// Get skill by name to get its UUID
+			skill, err := p.repo.GetSkill().GetByName(skillName)
+			if err != nil {
+				return err
+			}
+			if err := p.repo.GetProject().AddSkill(tx, project.UUID, skill.UUID); err != nil {
 				return err
 			}
 		}
@@ -167,6 +173,51 @@ func (p *Project) GetAll() ([]*dto.ProjectResponse, error) {
 	return responses, nil
 }
 
+func (p *Project) GetAllList(req *dto.ProjectListRequest) (*dto.ProjectListResponse, error) {
+	projects, totalCount, err := p.repo.GetProject().GetAllList(req)
+	if err != nil {
+		return nil, err
+	}
+
+	var responses []*dto.ProjectResponse
+	for _, project := range projects {
+		responses = append(responses, &dto.ProjectResponse{
+			UUID:         project.UUID,
+			Name:         project.Name,
+			Description:  project.Description,
+			Status:       project.Status,
+			Duration:     project.Duration,
+			Timeline:     project.Timeline,
+			Deliverables: project.Deliverables,
+			CreatedBy:    project.CreatedBy,
+			CreatedAt:    project.CreatedAt,
+		})
+	}
+
+	for _, project := range responses {
+		skills, err := p.repo.GetSkill().GetByProjectUUID(project.UUID)
+		if err != nil {
+			return nil, err
+		}
+		for _, skill := range skills {
+			project.Skills = append(project.Skills, skill.Name)
+		}
+	}
+
+	totalPages := totalCount / req.Limit
+	if totalCount%req.Limit != 0 {
+		totalPages++
+	}
+
+	return &dto.ProjectListResponse{
+		Projects:   responses,
+		TotalCount: totalCount,
+		Page:       req.Page,
+		Limit:      req.Limit,
+		TotalPages: totalPages,
+	}, nil
+}
+
 func (p *Project) GetByBusinessUUID(businessUUID string) ([]*dto.ProjectResponse, error) {
 	projects, err := p.repo.GetProject().GetByBusinessUUID(businessUUID)
 	if err != nil {
@@ -188,15 +239,27 @@ func (p *Project) GetByBusinessUUID(businessUUID string) ([]*dto.ProjectResponse
 	return responses, nil
 }
 
-func (p *Project) AddSkill(projectUUID, skillUUID string) error {
+func (p *Project) AddSkill(projectUUID, skillName string) error {
+	// First, get the skill by name to get its UUID
+	skill, err := p.repo.GetSkill().GetByName(skillName)
+	if err != nil {
+		return err
+	}
+
 	return p.repo.WithTransaction(func(tx *sqlx.Tx) error {
-		return p.repo.GetProject().AddSkill(tx, projectUUID, skillUUID)
+		return p.repo.GetProject().AddSkill(tx, projectUUID, skill.UUID)
 	})
 }
 
-func (p *Project) RemoveSkill(projectUUID, skillUUID string) error {
+func (p *Project) RemoveSkill(projectUUID, skillName string) error {
+	// First, get the skill by name to get its UUID
+	skill, err := p.repo.GetSkill().GetByName(skillName)
+	if err != nil {
+		return err
+	}
+
 	return p.repo.WithTransaction(func(tx *sqlx.Tx) error {
-		return p.repo.GetProject().RemoveSkill(tx, projectUUID, skillUUID)
+		return p.repo.GetProject().RemoveSkill(tx, projectUUID, skill.UUID)
 	})
 }
 

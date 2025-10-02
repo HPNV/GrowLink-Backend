@@ -119,9 +119,17 @@ func (s *Student) GetAll(c *gin.Context) {
 
 func (s *Student) AddSkill(c *gin.Context) {
 	studentUUID := c.Param("uuid")
-	skillUUID := c.Param("skillUuid")
 
-	err := s.service.GetStudent().AddSkill(studentUUID, skillUUID)
+	var req struct {
+		SkillName string `json:"skill_name" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	err := s.service.GetStudent().AddSkill(studentUUID, req.SkillName)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -132,9 +140,17 @@ func (s *Student) AddSkill(c *gin.Context) {
 
 func (s *Student) RemoveSkill(c *gin.Context) {
 	studentUUID := c.Param("uuid")
-	skillUUID := c.Param("skillUuid")
 
-	err := s.service.GetStudent().RemoveSkill(studentUUID, skillUUID)
+	var req struct {
+		SkillName string `json:"skill_name" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	err := s.service.GetStudent().RemoveSkill(studentUUID, req.SkillName)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

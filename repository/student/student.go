@@ -28,76 +28,49 @@ func NewStudent(db *sqlx.DB) IStudent {
 }
 
 func (s *Student) Create(tx *sqlx.Tx, student *db.Student) error {
-	query := `
-		INSERT INTO students (user_uuid, university)
-		VALUES ($1, $2)
-		RETURNING uuid
-	`
-	return tx.QueryRow(query, student.UserUUID, student.University).Scan(&student.UUID)
+	return tx.QueryRow(CreateQuery, student.UserUUID, student.University).Scan(&student.UUID)
 }
 
 func (s *Student) GetByUUID(uuid string) (*db.Student, error) {
 	student := &db.Student{}
-	query := `SELECT uuid, user_uuid, university FROM students WHERE uuid = $1`
-	err := s.db.Get(student, query, uuid)
+	err := s.db.Get(student, GetByUUIDQuery, uuid)
 	return student, err
 }
 
 func (s *Student) GetByUserUUID(userUUID string) (*db.Student, error) {
 	student := &db.Student{}
-	query := `SELECT uuid, user_uuid, university FROM students WHERE user_uuid = $1`
-	err := s.db.Get(student, query, userUUID)
+	err := s.db.Get(student, GetByUserUUIDQuery, userUUID)
 	return student, err
 }
 
 func (s *Student) Update(tx *sqlx.Tx, student *db.Student) error {
-	query := `
-		UPDATE students 
-		SET university = $1
-		WHERE uuid = $2
-	`
-	_, err := tx.Exec(query, student.University, student.UUID)
+	_, err := tx.Exec(UpdateQuery, student.University, student.UUID)
 	return err
 }
 
 func (s *Student) Delete(tx *sqlx.Tx, uuid string) error {
-	query := `DELETE FROM students WHERE uuid = $1`
-	_, err := tx.Exec(query, uuid)
+	_, err := tx.Exec(DeleteQuery, uuid)
 	return err
 }
 
 func (s *Student) GetAll() ([]*db.Student, error) {
 	var students []*db.Student
-	query := `SELECT uuid, user_uuid, university FROM students ORDER BY university`
-	err := s.db.Select(&students, query)
+	err := s.db.Select(&students, GetAllQuery)
 	return students, err
 }
 
 func (s *Student) AddSkill(tx *sqlx.Tx, studentUUID, skillUUID string) error {
-	query := `
-		INSERT INTO student_skills (student_uuid, skill_uuid)
-		VALUES ($1, $2)
-		ON CONFLICT (student_uuid, skill_uuid) DO NOTHING
-	`
-	_, err := tx.Exec(query, studentUUID, skillUUID)
+	_, err := tx.Exec(AddSkillQuery, studentUUID, skillUUID)
 	return err
 }
 
 func (s *Student) RemoveSkill(tx *sqlx.Tx, studentUUID, skillUUID string) error {
-	query := `DELETE FROM student_skills WHERE student_uuid = $1 AND skill_uuid = $2`
-	_, err := tx.Exec(query, studentUUID, skillUUID)
+	_, err := tx.Exec(RemoveSkillQuery, studentUUID, skillUUID)
 	return err
 }
 
 func (s *Student) GetSkills(studentUUID string) ([]*db.Skill, error) {
 	var skills []*db.Skill
-	query := `
-		SELECT s.uuid, s.name, s.description, s.created_at
-		FROM skills s
-		INNER JOIN student_skills ss ON s.uuid = ss.skill_uuid
-		WHERE ss.student_uuid = $1
-		ORDER BY s.name
-	`
-	err := s.db.Select(&skills, query, studentUUID)
+	err := s.db.Select(&skills, GetSkillsQuery, studentUUID)
 	return skills, err
 }

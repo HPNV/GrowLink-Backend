@@ -14,8 +14,8 @@ type IStudent interface {
 	Update(uuid string, req *dto.StudentRequest) (*dto.StudentResponse, error)
 	Delete(uuid string) error
 	GetAll() ([]*dto.StudentResponse, error)
-	AddSkill(studentUUID, skillUUID string) error
-	RemoveSkill(studentUUID, skillUUID string) error
+	AddSkill(studentUUID, skillName string) error
+	RemoveSkill(studentUUID, skillName string) error
 	GetSkills(studentUUID string) ([]*dto.SkillResponse, error)
 }
 
@@ -125,15 +125,27 @@ func (s *Student) GetAll() ([]*dto.StudentResponse, error) {
 	return responses, nil
 }
 
-func (s *Student) AddSkill(studentUUID, skillUUID string) error {
+func (s *Student) AddSkill(studentUUID, skillName string) error {
+	// First, get the skill by name to get its UUID
+	skill, err := s.repo.GetSkill().GetByName(skillName)
+	if err != nil {
+		return err
+	}
+
 	return s.repo.WithTransaction(func(tx *sqlx.Tx) error {
-		return s.repo.GetStudent().AddSkill(tx, studentUUID, skillUUID)
+		return s.repo.GetStudent().AddSkill(tx, studentUUID, skill.UUID)
 	})
 }
 
-func (s *Student) RemoveSkill(studentUUID, skillUUID string) error {
+func (s *Student) RemoveSkill(studentUUID, skillName string) error {
+	// First, get the skill by name to get its UUID
+	skill, err := s.repo.GetSkill().GetByName(skillName)
+	if err != nil {
+		return err
+	}
+
 	return s.repo.WithTransaction(func(tx *sqlx.Tx) error {
-		return s.repo.GetStudent().RemoveSkill(tx, studentUUID, skillUUID)
+		return s.repo.GetStudent().RemoveSkill(tx, studentUUID, skill.UUID)
 	})
 }
 

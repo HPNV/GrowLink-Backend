@@ -79,12 +79,7 @@ func (f *File) UploadImage(tx *sqlx.Tx, file multipart.File, header *multipart.F
 	}
 
 	// Save to database
-	query := `
-		INSERT INTO files (uuid, original_name, file_name, file_path, file_size, mime_type, uploaded_by)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
-		RETURNING created_at
-	`
-	err = tx.QueryRow(query,
+	err = tx.QueryRow(CreateQuery,
 		fileRecord.UUID,
 		fileRecord.OriginalName,
 		fileRecord.FileName,
@@ -105,11 +100,7 @@ func (f *File) UploadImage(tx *sqlx.Tx, file multipart.File, header *multipart.F
 
 func (f *File) GetByUUID(uuid string) (*db.File, error) {
 	file := &db.File{}
-	query := `
-		SELECT uuid, original_name, file_name, file_path, file_size, mime_type, uploaded_by, created_at
-		FROM files WHERE uuid = $1
-	`
-	err := f.db.Get(file, query, uuid)
+	err := f.db.Get(file, GetByUUIDQuery, uuid)
 	return file, err
 }
 
@@ -121,8 +112,7 @@ func (f *File) Delete(tx *sqlx.Tx, uuid string) error {
 	}
 
 	// Delete from database
-	query := `DELETE FROM files WHERE uuid = $1`
-	_, err = tx.Exec(query, uuid)
+	_, err = tx.Exec(DeleteQuery, uuid)
 	if err != nil {
 		return err
 	}
@@ -138,11 +128,7 @@ func (f *File) Delete(tx *sqlx.Tx, uuid string) error {
 
 func (f *File) GetByUploadedBy(uploadedBy string) ([]*db.File, error) {
 	var files []*db.File
-	query := `
-		SELECT uuid, original_name, file_name, file_path, file_size, mime_type, uploaded_by, created_at
-		FROM files WHERE uploaded_by = $1 ORDER BY created_at DESC
-	`
-	err := f.db.Select(&files, query, uploadedBy)
+	err := f.db.Select(&files, GetByUploadedByQuery, uploadedBy)
 	return files, err
 }
 
