@@ -87,13 +87,27 @@ func (p *Project) GetByUUID(uuid string) (*dto.ProjectResponse, error) {
 		return nil, err
 	}
 
+	skills, err := p.repo.GetSkill().GetByProjectUUID(project.UUID)
+	if err != nil {
+		return nil, err
+	}
+
+	var skillNames []string
+	for _, skill := range skills {
+		skillNames = append(skillNames, skill.Name)
+	}
+
 	return &dto.ProjectResponse{
-		UUID:        project.UUID,
-		Name:        project.Name,
-		Description: project.Description,
-		Status:      project.Status,
-		CreatedBy:   project.CreatedBy,
-		CreatedAt:   project.CreatedAt,
+		UUID:         project.UUID,
+		Name:         project.Name,
+		Description:  project.Description,
+		Status:       project.Status,
+		Deliverables: project.Deliverables,
+		Duration:     project.Duration,
+		Timeline:     project.Timeline,
+		Skills:       skillNames,
+		CreatedBy:    project.CreatedBy,
+		CreatedAt:    project.CreatedAt,
 	}, nil
 }
 
