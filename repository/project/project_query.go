@@ -7,19 +7,30 @@ const (
 		RETURNING uuid, created_at
 	`
 
-	GetByUUIDQuery = `SELECT uuid, name, description, status, created_by, created_at FROM projects WHERE uuid = $1`
+	GetByUUIDQuery = `
+		SELECT 
+			uuid, 
+			name, 
+			description, 
+			status, 
+			duration, 
+			timeline, 
+			deliverables, 
+			created_by, 
+			created_at 
+		FROM projects WHERE uuid = $1`
 
 	UpdateQuery = `
 		UPDATE projects 
-		SET name = $1, description = $2, status = $3
-		WHERE uuid = $4
+		SET name = $1, description = $2, status = $3, duration = $4, timeline = $5, deliverables = $6
+		WHERE uuid = $7
 	`
 
 	DeleteQuery = `DELETE FROM projects WHERE uuid = $1`
 
-	GetAllQuery = `SELECT uuid, name, description, status, created_by, created_at FROM projects ORDER BY created_at DESC`
+	GetAllQuery = `SELECT uuid, name, description, status, duration, timeline, deliverables, created_by, created_at FROM projects ORDER BY created_at DESC`
 
-	GetByBusinessUUIDQuery = `SELECT uuid, name, description, status, created_by, created_at FROM projects WHERE created_by = $1 ORDER BY created_at DESC`
+	GetByBusinessUUIDQuery = `SELECT uuid, name, description, status, duration, timeline, deliverables, created_by, created_at FROM projects WHERE created_by = $1 ORDER BY created_at DESC`
 
 	AddSkillQuery = `
 		INSERT INTO project_skills (project_uuid, skill_uuid)

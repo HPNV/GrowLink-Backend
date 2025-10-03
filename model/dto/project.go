@@ -23,9 +23,12 @@ type ProjectResponse struct {
 }
 
 type ProjectUpdateRequest struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Status      string `json:"status" binding:"omitempty,oneof=open in_progress completed"`
+	Name         string `json:"name"`
+	Description  string `json:"description"`
+	Status       string `json:"status" binding:"omitempty,oneof=open in_progress completed"`
+	Duration     *int   `json:"duration"`
+	Timeline     string `json:"timeline" binding:"omitempty,oneof=day week month year"`
+	Deliverables string `json:"deliverables"`
 }
 
 type ProjectListRequest struct {

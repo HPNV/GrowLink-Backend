@@ -128,6 +128,15 @@ func (p *Project) Update(uuid string, req *dto.ProjectUpdateRequest) (*dto.Proje
 	if req.Status != "" {
 		existing.Status = req.Status
 	}
+	if req.Duration != nil {
+		existing.Duration = *req.Duration
+	}
+	if req.Timeline != "" {
+		existing.Timeline = req.Timeline
+	}
+	if req.Deliverables != "" {
+		existing.Deliverables = req.Deliverables
+	}
 
 	err = p.repo.WithTransaction(func(tx *sqlx.Tx) error {
 		return p.repo.GetProject().Update(tx, existing)
@@ -137,13 +146,28 @@ func (p *Project) Update(uuid string, req *dto.ProjectUpdateRequest) (*dto.Proje
 		return nil, err
 	}
 
+	// Get skills for the response
+	skills, err := p.repo.GetSkill().GetByProjectUUID(existing.UUID)
+	if err != nil {
+		return nil, err
+	}
+
+	var skillNames []string
+	for _, skill := range skills {
+		skillNames = append(skillNames, skill.Name)
+	}
+
 	return &dto.ProjectResponse{
-		UUID:        existing.UUID,
-		Name:        existing.Name,
-		Description: existing.Description,
-		Status:      existing.Status,
-		CreatedBy:   existing.CreatedBy,
-		CreatedAt:   existing.CreatedAt,
+		UUID:         existing.UUID,
+		Name:         existing.Name,
+		Description:  existing.Description,
+		Status:       existing.Status,
+		Duration:     existing.Duration,
+		Timeline:     existing.Timeline,
+		Deliverables: existing.Deliverables,
+		Skills:       skillNames,
+		CreatedBy:    existing.CreatedBy,
+		CreatedAt:    existing.CreatedAt,
 	}, nil
 }
 
@@ -241,13 +265,27 @@ func (p *Project) GetByBusinessUUID(businessUUID string) ([]*dto.ProjectResponse
 	var responses []*dto.ProjectResponse
 	for _, project := range projects {
 		responses = append(responses, &dto.ProjectResponse{
-			UUID:        project.UUID,
-			Name:        project.Name,
-			Description: project.Description,
-			Status:      project.Status,
-			CreatedBy:   project.CreatedBy,
-			CreatedAt:   project.CreatedAt,
+			UUID:         project.UUID,
+			Name:         project.Name,
+			Description:  project.Description,
+			Status:       project.Status,
+			Duration:     project.Duration,
+			Timeline:     project.Timeline,
+			Deliverables: project.Deliverables,
+			CreatedBy:    project.CreatedBy,
+			CreatedAt:    project.CreatedAt,
 		})
+	}
+
+	// Load skills for each project
+	for _, project := range responses {
+		skills, err := p.repo.GetSkill().GetByProjectUUID(project.UUID)
+		if err != nil {
+			return nil, err
+		}
+		for _, skill := range skills {
+			project.Skills = append(project.Skills, skill.Name)
+		}
 	}
 
 	return responses, nil

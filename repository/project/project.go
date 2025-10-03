@@ -51,7 +51,7 @@ func (p *Project) GetByUUID(uuid string) (*db.Project, error) {
 }
 
 func (p *Project) Update(tx *sqlx.Tx, project *db.Project) error {
-	_, err := tx.Exec(UpdateQuery, project.Name, project.Description, project.Status, project.UUID)
+	_, err := tx.Exec(UpdateQuery, project.Name, project.Description, project.Status, project.Duration, project.Timeline, project.Deliverables, project.UUID)
 	return err
 }
 
